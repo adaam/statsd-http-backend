@@ -16,7 +16,8 @@ var net = require('net'),
     util = require('util'),
     http = require('http'),
     https = require('https'),
-    url = require('url');
+    url = require('url'),
+    request = require('request');
 
 var debug;
 var flushInterval;
@@ -69,33 +70,18 @@ var post_stats = function graphite_post_stats(metricsArray) {
 
       var options = url.parse(bridgeURL + api_key);
       options.method = 'POST';
-      options.headers = {'Content-Length': data.length};
+      options.headers = {'Content-Length': data.length,'Content-Type': 'application/json; charset=iso-8859-1'};
 
-      var req;
-
-      if(options.protocol === 'https:'){
-        req = https.request(options, function(res) {
-          res.setEncoding('utf8');
-        });
-      } else {
-        req = http.request(options, function(res) {
-          res.setEncoding('utf8');
-        });
-      }
-
-      req.on('error', function(e) {
-        console.log('problem with request: ' + e.message);
-        graphiteStats.last_exception = Math.round(new Date().getTime() / 1000);
-      });
-
-      req.on('close', function(e){
+      request.post({url: bridgeURL + api_key, body: data}, function optionalCallback(err, httpResponse, body) {
+        if (err) {
+          graphiteStats.last_exception = Math.round(new Date().getTime() / 1000);
+          return console.error('upload failed:', err);
+        }
         graphiteStats.flush_time = (Date.now() - starttime);
         graphiteStats.flush_length = data.length;
         graphiteStats.last_flush = Math.round(new Date().getTime() / 1000);
+        console.log('Upload successful!  Server responded with:', body);
       });
-
-      req.write(data);
-      req.end();
     } catch(e){
       if (debug) {
         util.log(e);
