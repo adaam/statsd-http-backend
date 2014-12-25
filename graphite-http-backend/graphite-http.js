@@ -68,11 +68,13 @@ var post_stats = function graphite_post_stats(metricsArray) {
 
       var data = JSON.stringify(metricsArray);
 
-      var options = url.parse(bridgeURL + api_key);
-      options.method = 'POST';
-      options.headers = {'Content-Length': data.length,'Content-Type': 'application/json; charset=iso-8859-1'};
+      if (proxyServer) {
+        r = request.defaults({'proxy': proxyServer})
+      } else {
+        r = request.defaults({})
+      }
 
-      request.post({url: bridgeURL + api_key, body: data}, function optionalCallback(err, httpResponse, body) {
+      r.post({url: bridgeURL + api_key, body: data}, function optionalCallback(err, httpResponse, body) {
         if (err) {
           graphiteStats.last_exception = Math.round(new Date().getTime() / 1000);
           return console.error('upload failed:', err);
