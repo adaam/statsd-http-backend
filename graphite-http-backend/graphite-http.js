@@ -82,6 +82,9 @@ var post_stats = function graphite_post_stats(metricsArray) {
         graphiteStats.last_flush = Math.round(new Date().getTime() / 1000);
         console.log('Upload successful!  Server responded with:', body);
       });
+//console.log('origin data is', data);
+
+
     } catch(e){
       if (debug) {
         util.log(e);
